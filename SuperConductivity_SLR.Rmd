@@ -1,66 +1,194 @@
 ---
 title: "SLR_superconductivity"
-author: "Sowmya"
-date: "17/12/2021"
+author: "Sowmya, Disha, Anushka, Pranjali, Ashmita"
+date: "19/12/2021"
 output: pdf_document
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+
+```{r include=FALSE}
+# Don't delete this chunk if you are using the mosaic package
+# This loads the mosaic and dplyr packages
+require(mosaic)
 ```
 
-## R Markdown
+```{r include=FALSE}
+# knitr settings to control how R chunks work.
+require(knitr)
+opts_chunk$set(
+  tidy=FALSE,     # display code as typed
+  size="small"    # slightly smaller font for code
+)
+# This loads the mosaic data sets.  (Could be deleted if you are not using them.)
+require(mosaicData)
+```
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+# Summary:
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+## Aim: 
+## Plotting Linear Regression for best correlated variable with "critical temperature" in superconductivity data.
+
+## Steps:
+## Finding most correlated variables
+## Exploratory Analysis for these variables to understand more about them
+## Finding trend of correlated variables with target variable "critical_temp" to find which variable is best for SLR
+## Checking assumptions for SLR and performing SLR
+## Checking if the model is a good fit
 
 ```{r cars}
-sconduct <- read.csv('C:/Users/sowmy/Desktop/Fall2021/Stat-501/Rcode/train.csv')
+sconduct <- read.csv('C:/Users/disha/OneDrive/Desktop/501/final project/superconduct/train.csv')
 ncol(sconduct)
-names(sconduct)
-sconduct_x <-subset (sconduct, select = -critical_temp)
+
+sconduct_x <- subset(sconduct, select = -critical_temp)
 sconduct_y <- sconduct['critical_temp']
-names(sconduct_x)
+names_col = names(sconduct)
+names_col
 ```
 
-## Checking Correlation and removing variables
-
-The Caret package is used to remove any variables, whose correlation is more than the cutoff
+## Finding most correlated variables
 
 ```{r}
-#install.packages('caret')
-library('caret')
 df2 = cor(sconduct)
-hc = findCorrelation(df2,cutoff=0.5)
-hc = sort(hc)
-reduced = sconduct[,-c(hc)]
-names(reduced)
+df2 = df2[,82] # only select correlation with critical temp
+
+df2 = sort(df2, decreasing = TRUE)
+df2
 
 ```
-# Plots
-Now let us use a scatterplot matrix to see which variables correlates best with the target variable "critical_temp"
+## Picking the 5 variables that vary lineary (hit and trial gave these best variables varying linearly, even though correlation might be less)
 
+## Exploratory Analysis for these variables to understand more about them
+
+Index used :
+
+            0 : entropy_atomic_mass                     
+            1 : wtd_std_atomic_radius
+            2 : wtd_entropy_FusionHeat
+            3 : wtd_entropy_Valence
+            4 : wtd_range_ThermalConductivity
+                             
+\textbf{All variables continuous, quantitative except number of elements}
 ```{r}
-plot(reduced,col="#69b3a2")
+bwplot(~entropy_atomic_mass, data=sconduct)
+
+bwplot(~wtd_std_atomic_radius, data=sconduct)
+
+bwplot(~wtd_entropy_FusionHeat, data=sconduct)
+
+bwplot(~wtd_entropy_Valence, data=sconduct)
+
+bwplot(~wtd_range_ThermalConductivity, data=sconduct)
+
 ```
 
-## Some Experiments
+
 ```{r}
-lm1 <- lm(reduced,formula=critical_temp ~.)
+xyplot(critical_temp ~ entropy_atomic_mass, data=sconduct)
+
+xyplot(critical_temp ~ wtd_std_atomic_radius, data=sconduct)
+
+xyplot(critical_temp ~ wtd_entropy_FusionHeat, data=sconduct)
+
+xyplot(critical_temp ~ wtd_entropy_Valence, data=sconduct)
+
+xyplot(critical_temp ~ wtd_range_ThermalConductivity, data=sconduct)
+
+```
+
+## Fitting the linear model on these variables and Checking assumptions for these 5 variables
+
+## Fit 
+```{r}
+# entropy_atomic_mass
+xyplot(critical_temp ~ entropy_atomic_mass, sconduct, type=c("p", "r"))
+lm0 <- lm(critical_temp ~ entropy_atomic_mass, sconduct)
+summary(lm0)
+
+```
+
+```{r}
+# wtd_std_atomic_radius
+xyplot(critical_temp ~ wtd_std_atomic_radius, sconduct, type=c("p", "r"))
+lm1 <- lm(critical_temp ~ wtd_std_atomic_radius, sconduct)
 summary(lm1)
 ```
-## Leaps Package Experiments
+
+
 ```{r}
-install.packages('leaps')
-library(leaps)
-Best_Subset <-
-    regsubsets(area~.,
-               data =reduced,
-               nbest = 1,      # 1 best model for each number of predictors
-               nvmax = NULL,    # NULL for no limit on number of variables
-               force.in = NULL, force.out = NULL,
-               method = "exhaustive")
-summary_best_subset <- summary(regsubsets.out)
-as.data.frame(summary_best_subset$outmat)
+# wtd_entropy_FusionHeat
+xyplot(critical_temp ~ wtd_entropy_FusionHeat, sconduct, type=c("p", "r"))
+lm2 <- lm(critical_temp ~ wtd_entropy_FusionHeat, sconduct)
+summary(lm2)
 ```
+
+
+```{r}
+# wtd_entropy_Valence
+xyplot(critical_temp ~ wtd_entropy_Valence, sconduct, type=c("p", "r"))
+lm3 <- lm(critical_temp ~ wtd_entropy_Valence, sconduct)
+summary(lm3)
+```
+
+
+```{r}
+# wtd_entropy_atomic_mass
+xyplot(critical_temp ~ wtd_range_ThermalConductivity, sconduct, type=c("p", "r"))
+lm4 <- lm(critical_temp ~ wtd_range_ThermalConductivity, sconduct)
+summary(lm4)
+```
+
+# Check assumptions
+
+# 1. Linearity : Verified (appears linear)
+# 2. Independence : Assume true
+# 3. Residuals Normal : 
+```{r}
+par(mfrow=c(5, 2))
+histogram(~ residuals(lm0), nint=10)
+xqqmath(~resid(lm0))
+
+histogram(~ residuals(lm1), nint=10)
+xqqmath(~resid(lm1))
+
+histogram(~ residuals(lm2), nint=10)
+xqqmath(~resid(lm2))
+
+histogram(~ residuals(lm3), nint=10)
+xqqmath(~resid(lm3))
+
+histogram(~ residuals(lm4), nint=10)
+xqqmath(~resid(lm4))
+
+```
+Histogram : 
+Can assume Normal: 4
+Not sure due to skewness: 0, 1, 2, 3
+
+QQPlot : 
+Perfect Normal: None
+Moderate Normal : All
+
+## 4. Equal Variance Assumption:
+```{r}
+xyplot(residuals(lm0) ~ fitted(lm0), type=c("p", "r"))
+
+xyplot(residuals(lm1) ~ fitted(lm1), type=c("p", "r"))
+
+xyplot(residuals(lm2) ~ fitted(lm2), type=c("p", "r"))
+
+xyplot(residuals(lm3) ~ fitted(lm3), type=c("p", "r"))
+
+xyplot(residuals(lm4) ~ fitted(lm4), type=c("p", "r"))
+
+```
+Since the residuals do not look fairly evenly scattered about the horizontal line of 0 in any of the plots, are assumption is not getting justified for this dataset (tried many variables).
+Also the R-squared is not very great (~0.30-0.34 for all graphs).
+
+We should not fit regression on this dataset.
+
+F-test
+Look at the tables and write results. Mention formulae.
+
+t-test
+Look at the table and write results. Mention formulae.
+
